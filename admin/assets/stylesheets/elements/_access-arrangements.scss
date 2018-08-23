@@ -1,0 +1,20 @@
+.hide-checkbox-content {
+  display: none;
+}
+
+.show-checkbox-content {
+  margin-top: 10px;
+  display: block;
+  position: relative;
+  .form-group {
+    margin-bottom: pem(-10px);
+  }
+}
+
+.access-arrangements-textarea {
+  width: pem(460px);
+}
+
+.extra-space {
+  margin-top: pem(40px);
+}

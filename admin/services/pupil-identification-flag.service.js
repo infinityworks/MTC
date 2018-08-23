@@ -1,4 +1,5 @@
 const dateService = require('../services/date.service')
+const monitor = require('../helpers/monitor')
 const pupilIdentificationFlag = {}
 
 /**
@@ -25,6 +26,8 @@ pupilIdentificationFlag.addIdentificationFlags = (pupils) => {
       if (currentPupil.dateOfBirth.toString() === nextPupil.dateOfBirth.toString()) {
         currentPupil.fullName = `${currentPupil.lastName}, ${currentPupil.foreName} ${currentPupil.middleNames}`
         nextPupil.fullName = `${nextPupil.lastName}, ${nextPupil.foreName} ${nextPupil.middleNames}`
+        currentPupil.showMiddleNames = true
+        nextPupil.showMiddleNames = true
       }
     }
     currentPupil.fullName = !currentPupil.fullName ? `${currentPupil.lastName}, ${currentPupil.foreName}` : currentPupil.fullName
@@ -36,4 +39,4 @@ pupilIdentificationFlag.addIdentificationFlags = (pupils) => {
 pupilIdentificationFlag.haveEqualFullNames = (p1, p2) => p1.foreName.toLowerCase() === p2.foreName.toLowerCase() &&
 p1.lastName.toLowerCase() === p2.lastName.toLowerCase()
 
-module.exports = pupilIdentificationFlag
+module.exports = monitor('pupil-identification-flag.service', pupilIdentificationFlag)

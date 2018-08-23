@@ -4,17 +4,19 @@ class RestartsPage < SitePrism::Page
   element :heading, '.heading-xlarge'
   element :restarts_message, '.font-medium'
   element :select_pupil_to_restart_btn, 'input[value="Select pupils to restart"]'
-  element :reasons_list, '.restart-list'
-  element :reason_1, '.restart-list #restart-reason-0'
-  element :reason_3, '.restart-list #restart-reason-2'
+  element :reasons_list, '.list'
+  element :reason_1, '.list #restart-reason-0'
+  element :reason_2, '.list #restart-reason-1'
+  element :reason_3, '.list #restart-reason-2'
   element :reason_3_textbox, '#classDisruptionInfo'
-  element :reason_4, '.restart-list #restart-reason-3'
+  element :reason_4, '.list #restart-reason-3'
   element :reason4_explanation_input, '#did-not-complete-textarea'
   element :restart_further_info_input, '#restart-further-textarea'
   element :select_all_pupils, '#tickAllCheckboxes'
   element :deselct_all_pupil, '#tickAllCheckboxes', text: 'Deselect all'
   element :back_to_top, 'a', text: 'Back to top'
   element :flash_message, '.info-message'
+  element :csrf, 'input[name="_csrf"]', visible: false
 
   section :pupil_list, '#pupilsRestartList tbody' do
     sections :rows, 'tr' do
@@ -46,7 +48,7 @@ class RestartsPage < SitePrism::Page
     element :did_not_complete, 'strong', text: 'Did not complete'
   end
 
-  section :error_summary, '.error-summary' do
+  section :error_summary, 'div[aria-labelledby="error-summary-heading-1"]' do
     element :error_heading, '#error-summary-heading-1', text: 'You need to fix the errors on this page before continuing'
     element :error_info, 'p', text: 'See highlighted errors below'
     element :error_text, 'ul li a', text: 'Enter an explanation'

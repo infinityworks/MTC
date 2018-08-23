@@ -6,6 +6,7 @@ const attendanceCodeDataService = require('./data-access/attendance-code.data.se
 const pupilAttendanceDataService = require('./data-access/pupil-attendance.data.service')
 const pupilDataService = require('./data-access/pupil.data.service')
 const pinService = require('./pin.service')
+const monitor = require('../helpers/monitor')
 
 const attendanceService = {
   /**
@@ -15,9 +16,9 @@ const attendanceService = {
    * @param userId
    * @returns {Promise<void>}
    */
-  updatePupilAttendanceBySlug: async (slugs, code, userId) => {
-    const pupils = await pupilDataService.sqlFindPupilsByUrlSlug(slugs)
-    if (!pupils) {
+  updatePupilAttendanceBySlug: async (slugs, code, userId, schoolId) => {
+    const pupils = await pupilDataService.sqlFindPupilsByUrlSlug(slugs, schoolId)
+    if (!Array.isArray(pupils) || pupils.length === 0) {
       throw new Error('Pupils not found')
     }
     const attendanceCode = await attendanceCodeDataService.sqlFindOneAttendanceCodeByCode(code)
@@ -40,7 +41,7 @@ const attendanceService = {
       await pupilAttendanceDataService.sqlInsertBatch(inserts, attendanceCode.id, userId)
     }
 
-    await pinService.expireMultiplePins(ids)
+    await pinService.expireMultiplePins(ids, schoolId)
   },
 
   /**
@@ -66,4 +67,4 @@ const attendanceService = {
   }
 }
 
-module.exports = attendanceService
+module.exports = monitor('attendance.service', attendanceService)

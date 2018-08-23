@@ -1,0 +1,127 @@
+<div class="grid-row no-print">
+    <div class="column-one-half">
+        <%- partial('partials/_breadcrumbs', { breadcrumbs: breadcrumbs }) %>
+    </div>
+    <div class="column-one-half">
+        <%- partial('partials/_name_and_sign_out') %>
+    </div>
+</div>
+
+<%- partial('partials/_print_pupils', {
+  pupils: pupils,
+  date: date,
+  qrDataURL: qrDataURL,
+  school: school,
+  url: url
+}) %>
+
+<div class="grid-row no-print">
+    <div class="column-two-thirds">
+        <% if (messages && messages.info && messages.info.length) { %>
+        <div class="info-message">
+            <%= messages.info %>
+        </div>
+        <% } %>
+
+        <% if (error) { %>
+        <div class="error-summary" role="group" aria-labelledby="error-summary-heading-1">
+            <h2 class="heading-medium error-summary-heading" id="error-summary-heading-1">
+                <%= error %>
+            </h2>
+            <p>Multiplication tables check helpline<br>
+                <%= helplineNumber %>
+            </p>
+        </div>
+        <% } %>
+        <h1 class="heading-xlarge">View and print PINs - <%= pinEnv %> check</h1>
+
+        <%- partial('partials/_session_expiry') %>
+
+        <p class="lede">
+            Personal Identification Number (PIN) have been generated for selected pupils. These expire at 4pm daily.
+        </p>
+
+        <div class="button-wrapper">
+            <% if (error) { %>
+            <a class="button button-primary" disabled >Print PINs</a>
+            <% } else { %>
+            <a id="printPinsButton" class="button button-primary">Print PINs</a>
+            <% } %>
+        </div>
+
+        <% if (pupils && pupils.length > 0) { %>
+        <table class="spacious" id="generatePins" role="listbox" aria-label="Select pupils.">
+            <thead>
+            <tr>
+                <th scope="col">
+                    Pupil
+                </th>
+            </tr>
+            </thead>
+            <tbody>
+            <% pupils.forEach( (pupil) => { %>
+            <tr>
+                <td>
+                    <label for="pupil-<%= pupil.id %>">
+                        <strong><%= pupil.fullName %></strong>
+                        <% if (pupil.group) { %>
+                          (<%= pupil.group %>)
+                        <% } %>
+                    </label>
+                    <% if (pupil.showDoB) { %>
+                    <div class="font-greyed-out font-xsmall">
+                        Date of birth: <%= pupil.dateOfBirth %>
+                    </div>
+                    <% } %>
+                    <div>
+                      <div class="pin-content">
+                          <span class="label">School Password: </span>
+                          <span class="information"><%= (!!school ? school.pin : 'No active password') %></span>
+                          <span class="separator"></span>
+                          <span class="label">PIN: </span>
+                          <span class="information">
+                              <%= pupil.pin %>
+                          </span>
+                      </div>
+                    </div>
+                </td>
+            </tr>
+            <% }) %>
+            </tbody>
+        </table>
+
+        <div class="back-to-top-container">
+            <a href="#top">Back to top</a>
+        </div>
+
+        <% } %>
+    </div>
+
+    <div class="column-one-third sidebar" aria-label="sidebar">
+        <aside role="complementary" class="support-column">
+            <h3 class="heading-medium">Related</h3>
+            <nav role="navigation">
+                <ul class="list">
+                    <li>
+                        <a href="<%- guidancePdf %>" target="_blank" rel="noopener noreferrer">Guidance</a>
+                    </li>
+                    <li>
+                        <a href="/group/pupils-list">Group pupils</a>
+                    </li>
+                    <li>
+                        <a href="/restart/overview">Restarts</a>
+                    </li>
+                </ul>
+            </nav>
+        </aside>
+    </div>
+</div>
+
+<script>
+ $(document).ready(function () {
+   $('#printPinsButton').click(function (event) {
+     event.preventDefault()
+     window.print();
+   })
+ })
+</script>

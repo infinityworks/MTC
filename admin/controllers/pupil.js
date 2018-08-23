@@ -3,6 +3,7 @@
 const azureFileDataService = require('../services/data-access/azure-file.data.service')
 const dateService = require('../services/date.service')
 const fileValidator = require('../lib/validator/file-validator')
+const monitor = require('../helpers/monitor')
 const pupilAddService = require('../services/pupil-add-service')
 const pupilDataService = require('../services/data-access/pupil.data.service')
 const pupilService = require('../services/pupil.service')
@@ -24,7 +25,7 @@ const winston = require('winston')
 const getAddPupil = async (req, res, next, error = null) => {
   res.locals.pageTitle = 'Add pupil'
   try {
-    req.breadcrumbs('Pupil Register', '/pupil-register/pupils-list/name/asc')
+    req.breadcrumbs('Pupil Register', '/pupil-register/pupils-list')
     req.breadcrumbs(res.locals.pageTitle)
     res.render('pupil-register/add-pupil', {
       formData: req.body,
@@ -49,7 +50,7 @@ const postAddPupil = async (req, res, next) => {
     const pupil = await pupilAddService.addPupil(req.body, req.user.schoolId)
     req.flash('info', '1 new pupil has been added')
     const highlight = JSON.stringify([pupil.urlSlug.toString()])
-    res.redirect(`/pupil-register/pupils-list/name/asc?hl=${highlight}`)
+    res.redirect(`/pupil-register/pupils-list?hl=${highlight}`)
   } catch (error) {
     if (error.name === 'ValidationError') {
       return getAddPupil(req, res, next, error)
@@ -69,7 +70,7 @@ const getAddMultiplePupils = (req, res, next) => {
   res.locals.pageTitle = 'Add multiple pupils'
   const { hasError, fileErrors } = res
   try {
-    req.breadcrumbs('Pupil Register', '/pupil-register/pupils-list/name/asc')
+    req.breadcrumbs('Pupil Register', '/pupil-register/pupils-list')
     req.breadcrumbs(res.locals.pageTitle)
     res.render('school/add-multiple-pupils', {
       breadcrumbs: req.breadcrumbs(),
@@ -130,10 +131,10 @@ const postAddMultiplePupils = async (req, res, next) => {
     return getAddMultiplePupils(req, res, next)
   } else {
     req.flash('info', `${uploadResult.pupilIds && uploadResult.pupilIds.length} new pupils have been added`)
-    const savedPupils = await pupilDataService.sqlFindByIds(uploadResult.pupilIds)
+    const savedPupils = await pupilDataService.sqlFindByIds(uploadResult.pupilIds, req.user.schoolId)
     const slugs = savedPupils.map(p => p.urlSlug)
     const qp = encodeURIComponent(JSON.stringify(slugs))
-    res.redirect(`/pupil-register/pupils-list/name/asc?hl=${qp}`)
+    res.redirect(`/pupil-register/pupils-list?hl=${qp}`)
   }
 }
 
@@ -145,8 +146,8 @@ const postAddMultiplePupils = async (req, res, next) => {
  */
 const getErrorCSVFile = async (req, res) => {
   const blobFile = await azureFileDataService.azureDownloadFile('csvuploads', req.session.csvErrorFile)
-  res.setHeader('Content-disposition', 'filename=multiple_pupils_errors.csv')
-  res.setHeader('content-type', 'text/csv')
+  res.setHeader('Content-type', 'text/csv')
+  res.setHeader('Content-disposition', 'attachment; filename=multiple_pupils_errors.csv')
   res.write(blobFile)
   res.end()
 }
@@ -161,15 +162,9 @@ const getErrorCSVFile = async (req, res) => {
 const getEditPupilById = async (req, res, next) => {
   res.locals.pageTitle = 'Edit pupil data'
   try {
-    const pupil = await pupilDataService.sqlFindOneBySlug(req.params.id)
+    const pupil = await pupilDataService.sqlFindOneBySlug(req.params.id, req.user.schoolId)
     if (!pupil) {
       return next(new Error(`Pupil ${req.params.id} not found`))
-    }
-
-    // @TODO: Why is the school data pulled for?
-    const school = await schoolDataService.sqlFindOneById(pupil.school_id)
-    if (!school) {
-      return next(new Error(`School ${pupil.school._id} not found`))
     }
 
     const pupilData = pupilAddService.formatPupilData(pupil)
@@ -200,7 +195,7 @@ const postEditPupil = async (req, res, next) => {
   res.locals.pageTitle = 'Edit pupil data'
 
   try {
-    pupil = await pupilDataService.sqlFindOneBySlug(req.body.urlSlug)
+    pupil = await pupilDataService.sqlFindOneBySlug(req.body.urlSlug, req.user.schoolId)
     if (!pupil) {
       return next(new Error(`Pupil ${req.body.urlSlug} not found`))
     }
@@ -244,7 +239,7 @@ const postEditPupil = async (req, res, next) => {
   }
 
   const highlight = JSON.stringify([pupil.urlSlug.toString()])
-  res.redirect(`/pupil-register/pupils-list/name/asc?hl=${highlight}`)
+  res.redirect(`/pupil-register/pupils-list?hl=${highlight}`)
 }
 
 /**
@@ -266,7 +261,7 @@ const getPrintPupils = async (req, res, next) => {
   }
 }
 
-module.exports = {
+module.exports = monitor('pupil.controller', {
   getAddPupil,
   postAddPupil,
   getAddMultiplePupils,
@@ -275,4 +270,4 @@ module.exports = {
   getEditPupilById,
   postEditPupil,
   getPrintPupils
-}
+})

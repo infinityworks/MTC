@@ -7,14 +7,14 @@ const {
   getGeneratePinsOverview,
   getGeneratePinsList,
   postGeneratePins,
-  getGeneratedPinsList,
-  getPrintPins
+  getViewAndPrintPins,
+  getViewAndCustomPrintPins
 } = require('../controllers/pupil-pin')
 
-router.get('/generate-pins-overview', isAuthenticated(rolesConfig.ROLE_TEACHER), (req, res, next) => getGeneratePinsOverview(req, res, next))
-router.get('/generate-pins-list/:sortField/:sortDirection/:groupIds?', isAuthenticated(rolesConfig.ROLE_TEACHER), (req, res, next) => getGeneratePinsList(req, res, next))
-router.post('/generate-pins', isAuthenticated(rolesConfig.ROLE_TEACHER), (req, res, next) => postGeneratePins(req, res, next))
-router.get('/generated-pins-list', isAuthenticated(rolesConfig.ROLE_TEACHER), (req, res, next) => getGeneratedPinsList(req, res, next))
-router.get('/print-pins', isAuthenticated(rolesConfig.ROLE_TEACHER), (req, res, next) => getPrintPins(req, res, next))
+router.get('/generate-:pinEnv-pins-overview', isAuthenticated(rolesConfig.ROLE_TEACHER), (req, res, next) => getGeneratePinsOverview(req, res, next))
+router.get('/generate-:pinEnv-pins-list/:groupIds?', isAuthenticated(rolesConfig.ROLE_TEACHER), (req, res, next) => getGeneratePinsList(req, res, next))
+router.post('/generate-:pinEnv-pins', isAuthenticated(rolesConfig.ROLE_TEACHER), (req, res, next) => postGeneratePins(req, res, next))
+router.get('/view-and-custom-print-:pinEnv-pins', isAuthenticated(rolesConfig.ROLE_TEACHER), (req, res, next) => getViewAndCustomPrintPins(req, res, next))
+router.get('/view-and-print-:pinEnv-pins', isAuthenticated(rolesConfig.ROLE_TEACHER), (req, res, next) => getViewAndPrintPins(req, res, next))
 
 module.exports = router

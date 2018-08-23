@@ -39,6 +39,7 @@ $mainstream-brand: $department-for-education;
 @import '../../node_modules/govuk-elements-sass/public/sass/elements/shame';
 @import '../../node_modules/govuk-elements-sass/public/sass/elements/lists';
 @import '../../node_modules/govuk-elements-sass/public/sass/elements/components';
+@import '../../node_modules/govuk-elements-sass/public/sass/elements/tables';
 
 @import '_variables';
 @import 'elements/_phase-banner';
@@ -51,6 +52,7 @@ $mainstream-brand: $department-for-education;
 @import 'elements/_filters';
 @import 'elements/_flash-messages';
 @import 'elements/_boxes';
+@import 'elements/_lists';
 @import 'elements/_check-forms';
 @import 'elements/_sign-out';
 @import 'elements/_results';
@@ -63,6 +65,9 @@ $mainstream-brand: $department-for-education;
 @import 'elements/_restarts';
 @import 'elements/_groups';
 @import 'elements/_pupil-census';
+@import 'elements/_pupil-pin';
+@import 'elements/_access-arrangements';
+@import 'elements/_accessible-autocomplete';
 
 // Global
 
@@ -177,6 +182,10 @@ hr.divider {
   margin-top: $gutter;
 }
 
+.float-right {
+  float: right;
+}
+
 // Visibility
 
 .hidden {
@@ -227,6 +236,10 @@ dl dd {
 
 .list-nested {
   margin-left: pem(35px);
+}
+
+.list-item--dashed:before {
+  content: "— ";
 }
 
 // Forms
@@ -383,6 +396,14 @@ input {
 
 .error-summary {
   padding: 20px 15px 5px 15px;
+}
+
+.error-session-expiration {
+  display: none;
+}
+
+.error-about-to-expire-session {
+  display: block;
 }
 
 // Hide 'check all' checkboxes if JS is not enabled

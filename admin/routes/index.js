@@ -1,13 +1,14 @@
 const express = require('express')
 const router = express.Router()
 const passport = require('passport')
-const path = require('path')
-const fs = require('fs')
 
+const { getCommitId, getBuildNumber } = require('../helpers/healthcheck')
 const config = require('../config')
 const rolesConfig = require('../roles-config')
 const isAuthenticated = require('../authentication/middleware')
-const contactPage = require('../controllers/contact')
+const { getContactPage } = require('../controllers/contact')
+const { getPrivacyPage } = require('../controllers/privacy')
+const { getCookiesPage } = require('../controllers/cookies')
 const { getServiceManagerHome } = require('../controllers/service-manager')
 const checkFormController = require('../controllers/check-form')
 const { home,
@@ -43,7 +44,10 @@ router.get('/test-developer', isAuthenticated(rolesConfig.ROLE_TEST_DEVELOPER), 
 /* Service manager routing */
 router.get('/service-manager', isAuthenticated(rolesConfig.ROLE_SERVICE_MANAGER), (req, res, next) => getServiceManagerHome(req, res, next))
 /* Contact page */
-router.get('/contact', (req, res, next) => contactPage(req, res))
+router.get('/contact', (req, res) => getContactPage(req, res))
+router.get('/privacy', (req, res) => getPrivacyPage(req, res))
+/* Cookies page */
+router.get('/cookies', (req, res) => getCookiesPage(req, res))
 /* Health check */
 async function getPing (req, res) {
   // get build number from /build.txt
@@ -69,33 +73,6 @@ async function getPing (req, res) {
     'CurrentServerTime': Date.now()
   }
   return res.status(200).send(obj)
-}
-
-function getCommitId () {
-  return new Promise(function (resolve, reject) {
-    var commitFilePath = path.join(__dirname, '..', 'public', 'commit.txt')
-    fs.readFile(commitFilePath, 'utf8', function (err, data) {
-      if (!err) {
-        resolve(data)
-      } else {
-        reject(new Error('NOT FOUND'))
-      }
-    })
-  })
-}
-
-function getBuildNumber () {
-  // Promise wrapper function
-  return new Promise(function (resolve, reject) {
-    var buildFilePath = path.join(__dirname, '..', 'public', 'build.txt')
-    fs.readFile(buildFilePath, 'utf8', function (err, data) {
-      if (!err) {
-        resolve(data)
-      } else {
-        reject(new Error('NOT FOUND'))
-      }
-    })
-  })
 }
 
 router.get('/ping', (req, res) => getPing(req, res))

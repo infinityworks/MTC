@@ -1,8 +1,14 @@
 const azure = require('azure-storage')
 const config = require('../../config')
+const monitor = require('../../helpers/monitor')
 const blobService = config.AZURE_STORAGE_CONNECTION_STRING ? azure.createBlobService() : {
   createBlockBlobFromText: () => { return { name: 'test_error.csv' } },
   getBlobToText: () => 'text',
+  getBlobToStream: (container, blob, fStream, cb) => {
+    fStream.write('binary')
+    fStream.end()
+    cb()
+  },
   createContainerIfNotExists: () => {}
 }
 
@@ -36,12 +42,31 @@ const azureDownloadFile = async (container, blob) => {
   return file
 }
 
-module.exports = config.AZURE_STORAGE_CONNECTION_STRING ? {
+const azureDownloadFileStream = async (container, blob, stream) => {
+  const file = await new Promise((resolve, reject) => {
+    blobService.getBlobToStream(container, blob, stream,
+      (error, result) => {
+        if (error) reject(error)
+        else return resolve()
+      }
+    )
+  })
+  return file
+}
+
+const service = config.AZURE_STORAGE_CONNECTION_STRING ? {
   azureUploadFile,
-  azureDownloadFile
+  azureDownloadFile,
+  azureDownloadFileStream
 } : {
   azureUploadFile: () => {
     return { name: 'test_error.csv' }
   },
-  azureDownloadFile: () => 'text'
+  azureDownloadFile: () => 'text',
+  azureDownloadFileStream: (container, blob, fStream) => {
+    fStream.write('binary')
+    fStream.end()
+  }
 }
+
+module.exports = monitor('azureFile.data-service', service)

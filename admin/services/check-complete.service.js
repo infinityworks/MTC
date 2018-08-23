@@ -11,6 +11,7 @@ const markingService = require('./marking.service')
 const psUtilService = require('./psychometrician-util.service')
 const pupilDataService = require('../services/data-access/pupil.data.service')
 const checkFormDataService = require('../services/data-access/check-form.data.service')
+const monitor = require('../helpers/monitor')
 
 const checkCompleteService = {}
 
@@ -47,8 +48,8 @@ checkCompleteService.completeCheck = async function (completedCheck) {
     // HACK temporary way to mark checks until we move to a dedicated scheduled process
     const check = await completedCheckDataService.sqlFindOneByCheckCode(completedCheck.data.pupil.checkCode)
     const checkForm = await checkFormDataService.sqlFindOneParsedById(check.checkForm_id)
-    await markingService.mark(check, checkForm)
+    await markingService.mark({ ...check, formData: checkForm.formData })
   }
 }
 
-module.exports = checkCompleteService
+module.exports = monitor('check-complete.service', checkCompleteService)

@@ -2,16 +2,14 @@ Given(/^I am on the assign check window page$/) do
   testdeveloper_landing_page.assign_forms_to_check_windows.click
 end
 
-Then(/^I should see a heading for the page$/) do
+Then(/^I should see assign check window page as per design$/) do
   expect(assign_form_to_window_page).to have_heading
-end
-
-Then(/^I should see some information about the check form$/) do
   expect(assign_form_to_window_page).to have_information
+  expect(assign_form_to_window_page.check_windows.rows.first).to have_name_of_window
 end
 
-Then(/^I should see check windows$/) do
-  expect(assign_form_to_window_page.check_windows.rows.first).to have_name_of_window
+Then(/^I should not see '(.*)' check windows$/) do |check_window_name|
+  expect(assign_form_to_window_page.check_windows.rows.find {|row| row.name_of_window.text.include? check_window_name}).to be_nil
 end
 
 And(/^the check window has started$/) do

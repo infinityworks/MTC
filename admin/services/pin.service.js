@@ -1,4 +1,5 @@
 const moment = require('moment')
+const monitor = require('../helpers/monitor')
 const R = require('ramda')
 const pupilDataService = require('../services/data-access/pupil.data.service')
 const checkDataService = require('../services/data-access/check.data.service')
@@ -9,12 +10,13 @@ const pinValidator = require('../lib/validator/pin-validator')
 const pinService = {}
 
 /**
- * Get pupils with active pins
+ * Get pupils with active pins for a pin environment (live/fam)
  * @param dfeNumber
+ * @param pinEnv
  * @returns {Promise<*>}
  */
-pinService.getPupilsWithActivePins = async (dfeNumber) => {
-  let pupils = await pupilDataService.sqlFindPupilsWithActivePins(dfeNumber)
+pinService.getPupilsWithActivePins = async (dfeNumber, pinEnv) => {
+  let pupils = await pupilDataService.sqlFindPupilsWithActivePins(dfeNumber, pinEnv)
   return pupilIdentificationFlagService.addIdentificationFlags(pupils)
 }
 
@@ -52,11 +54,15 @@ pinService.expirePupilPin = async (token, checkCode) => {
 /**
  * Check and expire pupil pins based on set of provided pupil Ids
  * @param pupilIds
+ * @param {Number} schoolId - `school.id` database ID
  * @returns {Promise}
  */
 
-pinService.expireMultiplePins = async (pupilIds) => {
-  const pupils = await pupilDataService.sqlFindByIds(pupilIds)
+pinService.expireMultiplePins = async (pupilIds, schoolId) => {
+  if (!schoolId) {
+    throw new Error('Missing parameter: `schoolId`')
+  }
+  const pupils = await pupilDataService.sqlFindByIds(pupilIds, schoolId)
   let pupilData = []
   pupils.forEach(p => {
     if (p.pin || p.pinExpiresAt) pupilData.push(p)
@@ -72,4 +78,4 @@ pinService.expireMultiplePins = async (pupilIds) => {
   return pupilDataService.sqlUpdatePinsBatch(data)
 }
 
-module.exports = pinService
+module.exports = monitor('pin.service', pinService)

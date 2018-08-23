@@ -1,5 +1,6 @@
 const pupilDataService = require('./data-access/pupil.data.service')
 const schoolDataService = require('./data-access/school.data.service')
+const monitor = require('../helpers/monitor')
 
 const pupilService = {}
 
@@ -47,10 +48,12 @@ pupilService.getPrintPupils = async (dfeNumber) => {
 /**
  * Find Pupils using urlSlugs
  * @param {Array} slugs
+ * @param {number} schoolId - the db id of the school
  * @return {Promise<*>}
  */
-pupilService.getPupilsByUrlSlug = async (slugs) => {
-  return pupilDataService.sqlFindPupilsByUrlSlug(slugs)
+pupilService.getPupilsByUrlSlug = async (slugs, schoolId) => {
+  // TODO: [JMS] this only seems to be used by the test!
+  return pupilDataService.sqlFindPupilsByUrlSlug(slugs, schoolId)
 }
 
 /**
@@ -97,4 +100,20 @@ pupilService.sortByGroup = (pupilsList, sortDirection) => {
   })
 }
 
-module.exports = pupilService
+/**
+ * Sort pupil's array by group.
+ * @param {Number} dfeNumber
+ * @returns {Array}
+ */
+pupilService.getPupilsWithFullNames = async (dfeNumber) => {
+  if (!dfeNumber) {
+    throw new Error('dfeNumber is not provided')
+  }
+  const pupils = await pupilDataService.sqlFindPupilsByDfeNumber(dfeNumber)
+  return pupils.map(p => ({
+    fullName: `${p.lastName} ${p.foreName}${p.middleNames ? ' ' + p.middleNames : ''}`,
+    urlSlug: p.urlSlug
+  }))
+}
+
+module.exports = monitor('pupil.service', pupilService)

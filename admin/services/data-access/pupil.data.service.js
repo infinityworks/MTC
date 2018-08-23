@@ -2,8 +2,10 @@
 
 const { TYPES } = require('tedious')
 const R = require('ramda')
-const pupilDataService = {}
+const monitor = require('../../helpers/monitor')
+
 const table = '[pupil]'
+const pupilDataService = {}
 const sqlService = require('./sql.service')
 
 /** SQL METHODS */
@@ -11,13 +13,10 @@ const sqlService = require('./sql.service')
 /**
  * Fetch all pupils for a school by dfeNumber sorted by specific column.
  * @param dfeNumber
- * @param sortDirection
  * @returns {Promise<*>}
  */
-pupilDataService.sqlFindPupilsByDfeNumber = async function (dfeNumber, sortDirection) {
+pupilDataService.sqlFindPupilsByDfeNumber = async function (dfeNumber) {
   const paramDfeNumber = { name: 'dfeNumber', type: TYPES.Int, value: dfeNumber }
-  sortDirection = sortDirection === 'asc' ? 'asc' : 'desc'
-  const sortBy = `lastName ${sortDirection}, foreName ${sortDirection}, middleNames ${sortDirection}, dateOfBirth ${sortDirection}`
 
   const sql = `
       SELECT p.*, g.group_id 
@@ -25,25 +24,30 @@ pupilDataService.sqlFindPupilsByDfeNumber = async function (dfeNumber, sortDirec
       INNER JOIN school s ON s.id = p.school_id
       LEFT JOIN ${sqlService.adminSchema}.[pupilGroup] g ON p.id = g.pupil_id
       WHERE s.dfeNumber = @dfeNumber
-      ORDER BY ${sortBy}      
+      ORDER BY lastName asc      
     `
   return sqlService.query(sql, [paramDfeNumber])
 }
 
 /**
  * Find a pupil by their urlSlug
- * @param urlSlug
+ * @param urlSlug - GUID
+ * @param schoolId - look for the pupil only in a particular school
  * @return {Promise<void>}
  */
-pupilDataService.sqlFindOneBySlug = async function (urlSlug) {
-  const param = { name: 'urlSlug', type: TYPES.UniqueIdentifier, value: urlSlug }
+pupilDataService.sqlFindOneBySlug = async function (urlSlug, schoolId) {
+  const params = [
+    { name: 'urlSlug', type: TYPES.UniqueIdentifier, value: urlSlug },
+    { name: 'schoolId', type: TYPES.Int, value: schoolId }
+  ]
   const sql = `
       SELECT TOP 1 
       *  
       FROM ${sqlService.adminSchema}.${table}
-      WHERE urlSlug = @urlSlug    
+      WHERE urlSlug = @urlSlug
+      AND school_id = @schoolId  
     `
-  const results = await sqlService.query(sql, [param])
+  const results = await sqlService.query(sql, params)
   return R.head(results)
 }
 
@@ -154,19 +158,22 @@ pupilDataService.sqlCreate = async (data) => {
 }
 
 /**
- * Find pupils for a school with pins that have not yet expired
+ * Find pupils for a school with pins that have not yet expired, for
+ * a specific pin environment (live / fam)
  * @param dfeNumber
+ * @param pinEnv
  * @return {Promise<*>}
  */
-pupilDataService.sqlFindPupilsWithActivePins = async (dfeNumber) => {
+pupilDataService.sqlFindPupilsWithActivePins = async (dfeNumber, pinEnv) => {
+  // TODO: use pinEnv to differentiate between live and familiarisation
   const paramDfeNumber = { name: 'dfeNumber', type: TYPES.Int, value: dfeNumber }
   const sql = `
-  SELECT p.*, g.group_id 
-  FROM ${sqlService.adminSchema}.${table} p 
+  SELECT p.*, g.group_id
+  FROM ${sqlService.adminSchema}.${table} p
   INNER JOIN ${sqlService.adminSchema}.[school] s
     ON p.school_id = s.id
   LEFT JOIN  ${sqlService.adminSchema}.[pupilGroup] g
-    ON g.pupil_id = p.id 
+    ON g.pupil_id = p.id
   WHERE p.pin IS NOT NULL
   AND s.dfeNumber = @dfeNumber
   AND p.pinExpiresAt IS NOT NULL
@@ -181,16 +188,23 @@ pupilDataService.sqlFindPupilsWithActivePins = async (dfeNumber) => {
  * @param {Array|string} slugs
  * @return {Promise<*>}
  */
-pupilDataService.sqlFindPupilsByUrlSlug = async (slugs) => {
+pupilDataService.sqlFindPupilsByUrlSlug = async (slugs, schoolId) => {
   if (!(Array.isArray(slugs) && slugs.length > 0)) {
     throw new Error('No slugs provided')
   }
+
+  if (!schoolId) {
+    throw new Error('Required parameter `schoolId` missing')
+  }
+
   const select = `
   SELECT *
   FROM ${sqlService.adminSchema}.${table}
   `
   const {params, paramIdentifiers} = sqlService.buildParameterList(slugs, TYPES.UniqueIdentifier)
-  const whereClause = 'WHERE urlSlug IN (' + paramIdentifiers.join(', ') + ')'
+  const whereClause = 'WHERE urlSlug IN (' + paramIdentifiers.join(', ') + ')' +
+    'AND school_id = @schoolId'
+  params.push({name: 'schoolId', type: TYPES.Int, value: schoolId})
   const sql = [select, whereClause].join(' ')
   return sqlService.query(sql, params)
 }
@@ -198,18 +212,25 @@ pupilDataService.sqlFindPupilsByUrlSlug = async (slugs) => {
 /**
  * Find pupils by ids
  * @param ids
- * @return {Promise<void>}
+ * @param {Number} schoolId - `school.id` database ID
+ * @return {Promise<*>}
  */
-pupilDataService.sqlFindByIds = async (ids) => {
+pupilDataService.sqlFindByIds = async (ids, schoolId) => {
   if (!(Array.isArray(ids) && ids.length > 0)) {
     throw new Error('No ids provided')
   }
+  if (!schoolId) {
+    throw new Error('No `schoolId` provided')
+  }
+
   const select = `
   SELECT *
   FROM ${sqlService.adminSchema}.${table}
   `
   const {params, paramIdentifiers} = sqlService.buildParameterList(ids, TYPES.Int)
-  const whereClause = 'WHERE id IN (' + paramIdentifiers.join(', ') + ')'
+  const whereClause = 'WHERE id IN (' + paramIdentifiers.join(', ') + ')' +
+    ' AND school_id = @schoolId'
+  params.push({name: 'schoolId', type: TYPES.Int, value: schoolId})
   const orderClause = 'ORDER BY lastName ASC, foreName ASC, middleNames ASC, dateOfBirth ASC'
   const sql = [select, whereClause, orderClause].join(' ')
   return sqlService.query(sql, params)
@@ -236,16 +257,18 @@ pupilDataService.sqlFindByIdAndDfeNumber = async function (ids, dfeNumber) {
 }
 
 /**
- * Batch update pupil pins
+ * Batch update pupil pins for specific pin env (live/fam)
  * @param pupils
+ * @param pinEnv
  * @return {Promise<void>}
  */
-pupilDataService.sqlUpdatePinsBatch = async (pupils) => {
+pupilDataService.sqlUpdatePinsBatch = async (pupils, pinEnv = 'live') => {
+  // TODO: use pinEnv to differentiate between the live and familiarisation checks
   const params = []
   const update = []
   pupils.forEach((p, i) => {
-    update.push(`UPDATE ${sqlService.adminSchema}.${table} 
-    SET pin = @pin${i}, pinExpiresAt=@pinExpiredAt${i} 
+    update.push(`UPDATE ${sqlService.adminSchema}.${table}
+    SET pin = @pin${i}, pinExpiresAt=@pinExpiredAt${i}
     WHERE id = @id${i}`)
     params.push({
       name: `pin${i}`,
@@ -264,6 +287,23 @@ pupilDataService.sqlUpdatePinsBatch = async (pupils) => {
     })
   })
   const sql = update.join(';\n')
+  return sqlService.modify(sql, params)
+}
+/**
+ * Update several pupil tokens in one query
+ * @param {id: Number, jwtToken: String, jwtSecret: String} pupils
+ * @return {Promise}
+ */
+pupilDataService.sqlUpdateTokensBatch = async (pupils) => {
+  const params = []
+  const update = []
+  pupils.forEach((pupil, i) => {
+    update.push(`UPDATE ${sqlService.adminSchema}.${table} SET jwtToken = @jwtToken${i}, jwtSecret = @jwtSecret${i} WHERE id = @id${i}`)
+    params.push({ name: `jwtToken${i}`, value: pupil.jwtToken, type: TYPES.NVarChar })
+    params.push({ name: `jwtSecret${i}`, value: pupil.jwtSecret, type: TYPES.NVarChar })
+    params.push({ name: `id${i}`, value: pupil.id, type: TYPES.Int })
+  })
+  const sql = update.join('; \n')
   return sqlService.modify(sql, params)
 }
 
@@ -365,4 +405,4 @@ pupilDataService.sqlInsertMany = async (pupils) => {
   // E.g. { insertId: [1, 2], rowsModified: 4 }
 }
 
-module.exports = pupilDataService
+module.exports = monitor('pupil.data-service', pupilDataService)

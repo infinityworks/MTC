@@ -4,6 +4,7 @@ const moment = require('moment')
 const sqlService = require('./sql.service')
 const TYPES = require('tedious').TYPES
 const R = require('ramda')
+const monitor = require('../../helpers/monitor')
 const table = '[checkWindow]'
 
 const checkWindowDataService = {
@@ -61,8 +62,40 @@ const checkWindowDataService = {
         // anything else should default to checkWindow name
         sortBy = 'name'
     }
-    const sql = `SELECT * FROM ${sqlService.adminSchema}.[vewCheckWindowsWithFormCount] WHERE isDeleted=0 AND 
+    const sql = `SELECT * FROM ${sqlService.adminSchema}.[vewCheckWindowsWithFormCount] WHERE isDeleted=0 AND
                   checkEndDate >= @currentTimestamp ORDER BY ${sortBy} ${sortDirection}`
+    const params = [
+      {
+        name: 'currentTimestamp',
+        value: currentTimestamp,
+        type: TYPES.DateTimeOffset
+      }
+    ]
+    return sqlService.query(sql, params)
+  },
+  /**
+   * Fetch check windows by status, sort by, sort direction and date (current).
+   * @param sortBy valid values are [checkWindowName|adminStartDate|checkStartDate]
+   * @param sortDirection valid values are [asc|desc]
+   * @returns {Promise.<void>}
+   */
+  sqlFindFutureWithFormCount: async (sortBy, sortDirection) => {
+    const currentTimestamp = moment.utc().toDate()
+    sortDirection = sortDirection !== 'asc' ? 'desc' : 'asc'
+    switch (sortBy) {
+      case 'checkWindowName':
+        sortBy = 'name'
+        break
+      case 'adminStartDate':
+      case 'checkStartDate':
+        // are acceptable as-is
+        break
+      default:
+        // anything else should default to checkWindow name
+        sortBy = 'name'
+    }
+    const sql = `SELECT * FROM ${sqlService.adminSchema}.[vewCheckWindowsWithFormCount] WHERE isDeleted=0 AND
+                  checkEndDate >= @currentTimestamp AND checkStartDate >= @currentTimestamp ORDER BY ${sortBy} ${sortDirection}`
     const params = [
       {
         name: 'currentTimestamp',
@@ -263,7 +296,25 @@ const checkWindowDataService = {
                 ORDER BY ${sortBy} ${sortDirection}`
     const params = []
     return sqlService.query(sql, params)
+  },
+
+  /**
+   * Fetch check window by url slug.
+   * @param {String} urlSlug
+   * @returns {Object}
+   */
+  sqlFindOneByUrlSlug: async (urlSlug) => {
+    const sql = `SELECT * FROM ${sqlService.adminSchema}.${table} WHERE isDeleted=0 AND urlSlug=@urlSlug`
+    const params = [
+      {
+        name: 'urlSlug',
+        value: urlSlug,
+        type: TYPES.UniqueIdentifier
+      }
+    ]
+    const rows = await sqlService.query(sql, params)
+    return R.head(rows)
   }
 }
 
-module.exports = checkWindowDataService
+module.exports = monitor('checkWindow.data-service', checkWindowDataService)

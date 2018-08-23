@@ -14,6 +14,7 @@
     "startd": "yarn migrate-sql && node ./server.js",
     "startn": "nodemon ./server.js",
     "test": "nyc -r html ./run-jasmine.js",
+    "client-test": "karma start karma.conf.js",
     "testDebug": "node $NODE_DEBUG_OPTION ./node_modules/.bin/jasmine"
   },
   "engines": {
@@ -21,6 +22,7 @@
   },
   "dependencies": {
     "applicationinsights": "^0.22.0",
+    "archiver": "^2.1.1",
     "azure-storage": "^2.8.0",
     "bcryptjs": "^2.4.3",
     "bluebird": "^3.5.1",
@@ -29,7 +31,9 @@
     "connect-tedious": "^1.1.2",
     "cookie-parser": "~1.4.3",
     "cors": "^2.8.4",
+    "csurf": "^1.9.0",
     "debug": "^3.1.0",
+    "device": "^0.3.9",
     "dotenv": "^4.0.0",
     "ejs": "~2.5.6",
     "express": "^4.16.2",
@@ -52,6 +56,7 @@
     "mssql": "^4.1.0",
     "node-gyp": "^3.6.1",
     "number-to-words": "^1.2.3",
+    "object-hash": "^1.3.0",
     "passport": "^0.4.0",
     "passport-custom": "^1.0.5",
     "passport-local": "^1.0.0",
@@ -69,6 +74,7 @@
     "validate": "^3.0.1",
     "validator": "^9.4.0",
     "winston": "^2.4.0",
+    "winston-azure-application-insights": "^1.3.0",
     "xregexp": "^3.2.0"
   },
   "devDependencies": {
@@ -85,7 +91,15 @@
     "gulp-uglify": "^3.0.0",
     "jasmine": "^2.99.0",
     "jasmine-console-reporter": "^2.0.1",
+    "jasmine-core": "^3.1.0",
     "jsdoc": "^3.5.5",
+    "karma": "^2.0.4",
+    "karma-chrome-launcher": "^2.2.0",
+    "karma-firefox-launcher": "^1.1.0",
+    "karma-ie-launcher": "^1.0.0",
+    "karma-jasmine": "^1.1.2",
+    "karma-jquery": "^0.2.3",
+    "karma-safari-launcher": "^1.0.0",
     "node-mocks-http": "^1.6.6",
     "nodemon": "^1.17.2",
     "npm-run-all": "^4.1.2",

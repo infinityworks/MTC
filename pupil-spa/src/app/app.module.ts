@@ -2,13 +2,15 @@ import { BrowserModule } from '@angular/platform-browser';
 import { FormsModule } from '@angular/forms';
 import { HttpModule } from '@angular/http';
 import { HttpClientModule } from '@angular/common/http';
-import { NgModule, ErrorHandler } from '@angular/core';
+import { NgModule, ErrorHandler, APP_INITIALIZER } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 
 import { Angulartics2Module } from 'angulartics2';
 import { Angulartics2GoogleAnalytics } from 'angulartics2/ga';
 
 import { GlobalErrorHandler } from './error-handler';
+
+import { AppConfigService, loadConfigService } from './services/config/config.service';
 
 import { AnswerService } from './services/answer/answer.service';
 import { AppComponent } from './app.component';
@@ -24,7 +26,6 @@ import { InstructionsComponent } from './instructions/instructions.component';
 import { LoadingComponent } from './loading/loading.component';
 import { LoggedInGuard } from './logged-in.guard';
 import { LoginComponent } from './login/login.component';
-import { LoginFailureComponent } from './login-failure/login-failure.component';
 import { LoginSuccessComponent } from './login-success/login-success.component';
 import { LogoutComponent } from './logout/logout.component';
 import { QuestionComponent } from './question/question.component';
@@ -48,6 +49,7 @@ import { SpokenPracticeQuestionComponent } from './spoken-practice-question/spok
 import { SpokenQuestionComponent } from './spoken-question/spoken-question.component';
 import { SubmissionFailedComponent } from './submission-failed/submission-failed.component';
 import { SubmissionPendingComponent } from './submission-pending/submission-pending.component';
+import { QuestionsIntroComponent } from './questions-intro/questions-intro.component';
 
 
 const appRoutes: Routes = [
@@ -59,7 +61,6 @@ const appRoutes: Routes = [
   {path: 'sign-in', component: LoginComponent},
   {path: 'sign-in-success', component: LoginSuccessComponent, canActivate: [LoggedInGuard]},
   {path: 'sign-out', component: LogoutComponent, canActivate: [LoggedInGuard]},
-  {path: 'sign-in-failure', component: LoginFailureComponent },
   {path: 'check-complete', component: CheckCompleteComponent },
   {path: 'submission-failed', component: SubmissionFailedComponent }
   // { path: '**', component: NotFoundComponent }
@@ -76,7 +77,6 @@ const appRoutes: Routes = [
     InstructionsComponent,
     LoadingComponent,
     LoginComponent,
-    LoginFailureComponent,
     LoginSuccessComponent,
     LogoutComponent,
     PracticeQuestionComponent,
@@ -89,6 +89,7 @@ const appRoutes: Routes = [
     WarmupCompleteComponent,
     WarmupIntroComponent,
     WarmupLoadingComponent,
+    QuestionsIntroComponent,
   ],
   imports: [
     RouterModule.forRoot(
@@ -108,6 +109,8 @@ const appRoutes: Routes = [
     })
   ],
   providers: [
+    AppConfigService,
+    { provide: APP_INITIALIZER, useFactory: loadConfigService , deps: [AppConfigService], multi: true },
     { provide: ErrorHandler, useClass: GlobalErrorHandler },
     AnswerService,
     AuditService,

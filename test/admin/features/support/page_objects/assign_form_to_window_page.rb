@@ -4,10 +4,12 @@ class AssignFormToWindowPage < SitePrism::Page
   element :heading, '.heading-xlarge', text: 'Assign forms to check window'
   element :information, '#lead-paragraph', text: 'Select forms to assign to each window. One form can be applied to different windows.'
   element :flash_message, '.info-message'
+  element :csrf, 'input[name="_csrf"]', visible: false
 
   section :check_windows, '#assignFormToWindowList tbody' do
     sections :rows, 'tr' do
       element :name_of_window, 'td:first-of-type'
+      element :name_of_window_link, 'td:first-of-type a'
       element :assign_form, 'td a[href^="/test-developer/assign-form-to-window/"]'
     end
   end

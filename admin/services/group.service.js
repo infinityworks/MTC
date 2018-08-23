@@ -1,6 +1,8 @@
 'use strict'
 
+const monitor = require('../helpers/monitor')
 const groupDataService = require('../services/data-access/group.data.service')
+const pupilIdentificationFlagService = require('../services/pupil-identification-flag.service')
 const groupService = {}
 
 /**
@@ -39,7 +41,8 @@ groupService.getPupils = async function (schoolId, groupIdToExclude) {
   if (!schoolId) {
     throw new Error('schoolId is required')
   }
-  return groupDataService.sqlFindPupils(schoolId, groupIdToExclude)
+  const pupils = await groupDataService.sqlFindPupils(schoolId, groupIdToExclude)
+  return pupilIdentificationFlagService.addIdentificationFlags(pupils)
 }
 
 /**
@@ -99,4 +102,24 @@ groupService.findGroupsByPupil = async (schoolId, pupils) => {
   return groupDataService.sqlFindGroupsByIds(schoolId, pupils)
 }
 
-module.exports = groupService
+/**
+ * Find and assign groups to pupils based on the schoolId
+ * @param schoolId
+ * @param pupils
+ * @returns {Promise<*>}
+ */
+groupService.assignGroupsToPupils = async (schoolId, pupils) => {
+  if (!schoolId || !pupils || (pupils && pupils.length < 1)) {
+    return pupils
+  }
+  const groups = await groupService.getGroupsAsArray(schoolId)
+  if (groups && groups.length < 1) {
+    return pupils
+  }
+  return pupils.map(p => {
+    p.group = groups[p.group_id] || ''
+    return p
+  })
+}
+
+module.exports = monitor('group.service', groupService)

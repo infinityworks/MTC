@@ -3,6 +3,7 @@
 const pupilIdentificationFlag = require('../services/pupil-identification-flag.service')
 const pupilDataService = require('./data-access/pupil.data.service')
 const pupilsNotTakingCheckDataService = require('../services/data-access/pupils-not-taking-check.data.service')
+const monitor = require('../helpers/monitor')
 
 const pupilsNotTakingCheckService = {
   /**
@@ -14,9 +15,9 @@ const pupilsNotTakingCheckService = {
   sortPupilsByReason: (pupilsList, sortDirection) => {
     let sortedPupilsList
     sortedPupilsList = pupilsList.sort((a, b) => {
-      if (a.reason === 'N/A') {
+      if (a.reason === '-') {
         return 1
-      } else if (b.reason === 'N/A') {
+      } else if (b.reason === '-') {
         return -1
       } else if (a.reason === b.reason) {
         return 0
@@ -32,12 +33,10 @@ const pupilsNotTakingCheckService = {
   /**
    * Get pupils with and without reasons assigned.
    * @param schoolId
-   * @param sortField
-   * @param sortDirection
    * @returns {Promise<*>}
    */
-  getPupilsWithReasonsForDfeNumber: async (schoolId, sortField, sortDirection) => {
-    const pupils = await pupilDataService.sqlFindSortedPupilsWithAttendanceReasons(schoolId, sortField, sortDirection)
+  getPupilsWithReasonsForDfeNumber: async (schoolId) => {
+    const pupils = await pupilDataService.sqlFindSortedPupilsWithAttendanceReasons(schoolId)
     return pupilIdentificationFlag.addIdentificationFlags(pupils)
   },
 
@@ -75,4 +74,4 @@ const pupilsNotTakingCheckService = {
   }
 }
 
-module.exports = pupilsNotTakingCheckService
+module.exports = monitor('pupils-not-taking-check.service', pupilsNotTakingCheckService)

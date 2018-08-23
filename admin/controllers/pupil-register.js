@@ -1,21 +1,13 @@
 'use strict'
 
 const pupilIdentificationFlag = require('../services/pupil-identification-flag.service')
-const sortingAttributesService = require('../services/sorting-attributes.service')
 const pupilRegisterService = require('../services/pupil-register.service')
+const monitor = require('../helpers/monitor')
 
 const listPupils = async (req, res, next) => {
   res.locals.pageTitle = 'Pupil register'
-
-  // Sorting
-  const sortingOptions = [
-    { 'key': 'name', 'value': 'asc' },
-    { 'key': 'status', 'value': 'asc' },
-    { 'key': 'group', 'value': 'asc' }
-  ]
   const sortField = req.params.sortField === undefined ? 'name' : req.params.sortField
   const sortDirection = req.params.sortDirection === undefined ? 'asc' : req.params.sortDirection
-  const { htmlSortDirection, arrowSortDirection } = sortingAttributesService.getAttributes(sortingOptions, sortField, sortDirection)
 
   let pupilsFormatted = []
 
@@ -37,10 +29,8 @@ const listPupils = async (req, res, next) => {
   res.render('pupil-register/pupils-list', {
     highlight: hl && new Set(hl),
     pupils: pupilsFormatted,
-    breadcrumbs: req.breadcrumbs(),
-    htmlSortDirection,
-    arrowSortDirection
+    breadcrumbs: req.breadcrumbs()
   })
 }
 
-module.exports = { listPupils }
+module.exports = monitor('pupil-register.controller', { listPupils })

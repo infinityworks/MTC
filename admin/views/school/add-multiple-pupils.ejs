@@ -41,6 +41,8 @@
     <h1 class="heading-xlarge">Add multiple pupils</h1>
 </header>
 
+<%- partial('partials/_session_expiry') %>
+
 <div class="grid-row">
     <div class="column-two-thirds">
         <h3 class="heading-medium">Download template</h3>
@@ -61,6 +63,7 @@
     <div class="column-two-thirds">
         <h3 class="heading-medium">Upload file</h3>
         <form action="/pupil-register/pupil/add-batch-pupils" enctype="multipart/form-data" method="post" name="upload-template" id="upload-form">
+            <input type="hidden" name="_csrf" value="<%= csrftoken %>" />
             <div class="form-group<% if (fileErrors && fileErrors.hasError()) { %> form-group-error<% } %>">
                 <% if (fileErrors && fileErrors.hasError()) { %>
                 <label class="error-message">There is a problem with the form content</label>
@@ -72,7 +75,7 @@
             </div>
             <div class="form-buttons">
                 <input type="submit" id="upload-form-submit" class="button" value="Upload" disabled="disabled" />
-                <a href="/pupil-register/pupils-list/name/asc" class="button button-secondary">Cancel</a>
+                <a href="/pupil-register/pupils-list" class="button button-secondary">Cancel</a>
             </div>
         </form>
     </div>

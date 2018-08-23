@@ -10,6 +10,7 @@ if (formData.urlSlug) {
 %>
 
 <form action="<%= createOrSave %>" method="post" novalidate>
+    <input type="hidden" name="_csrf" value="<%= csrftoken %>" />
     <% if (formData.urlSlug) { %>
     <input type="hidden" name="urlSlug" value="<%= formData.urlSlug %>">
     <% } %>
@@ -171,7 +172,7 @@ if (formData.urlSlug) {
 
     <div class="form-buttons">
         <input type="submit" class="button" value="<%= submitLabel %>"/>
-        <a href="/pupil-register/pupils-list/name/asc" class="button button-secondary">Cancel</a>
+        <a href="/pupil-register/pupils-list" class="button button-secondary">Cancel</a>
     </div>
 </form>
 <div class="back-to-top-container">

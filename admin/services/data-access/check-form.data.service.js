@@ -3,6 +3,7 @@
 const TYPES = require('tedious').TYPES
 const R = require('ramda')
 const sqlService = require('./sql.service')
+const monitor = require('../../helpers/monitor')
 const table = '[checkForm]'
 
 const checkFormDataService = {
@@ -129,6 +130,7 @@ const checkFormDataService = {
           ON cf.id = fw.checkForm_id
       LEFT OUTER JOIN ${sqlService.adminSchema}.[checkWindow] cw
         ON cw.id = fw.checkWindow_id
+      WHERE cf.isDeleted=0
       ORDER BY cf.name ${sortOrder}`
     }
     return sqlService.query(sql, params)
@@ -265,4 +267,4 @@ const checkFormDataService = {
   }
 }
 
-module.exports = checkFormDataService
+module.exports = monitor('checkForm.data-service', checkFormDataService)

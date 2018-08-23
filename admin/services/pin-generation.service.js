@@ -11,6 +11,7 @@ const pinValidator = require('../lib/validator/pin-validator')
 const pupilIdentificationFlagService = require('../services/pupil-identification-flag.service')
 const restartService = require('../services/restart.service')
 const config = require('../config')
+const monitor = require('../helpers/monitor')
 
 const allowedWords = new Set((config.Data.allowedWords && config.Data.allowedWords.split(',')) || [])
 
@@ -29,14 +30,12 @@ const chars = '23456789'
 /**
  * Fetch pupils and filter required only pupil attributes
  * @param dfeNumber
- * @param sortField
- * @param sortDirection
  * @returns {Array}
  */
-pinGenerationService.getPupils = async (dfeNumber, sortField, sortDirection) => {
-  let pupils = await pupilDataService.sqlFindPupilsByDfeNumber(dfeNumber, sortDirection, sortField)
+pinGenerationService.getPupils = async (dfeNumber, pinEnv) => {
+  let pupils = await pupilDataService.sqlFindPupilsByDfeNumber(dfeNumber)
   pupils = await Promise.all(pupils.map(async p => {
-    const isValid = await pinGenerationService.isValid(p)
+    const isValid = await pinGenerationService.isValid(p, pinEnv)
     if (isValid) {
       return {
         id: p.id,
@@ -73,29 +72,40 @@ pinGenerationService.filterGroups = async (schoolId, pupilIds) => {
  * @param p
  * @returns {Boolean}
  */
-pinGenerationService.isValid = async (p) => {
+pinGenerationService.isValid = async (p, pinEnv = 'live') => {
   const checkCount = await checkDataService.sqlFindNumberOfChecksStartedByPupil(p.id)
   const pupilAttendance = await pupilAttendanceDataService.findOneByPupilId(p.id)
   const hasAttendance = pupilAttendance && pupilAttendance.attendanceCode_id
   if (checkCount === restartService.totalChecksAllowed) return false
   const canRestart = await restartService.canRestart(p.id)
-  return !pinValidator.isActivePin(p.pin, p.pinExpiresAt) && !hasAttendance && !canRestart
+  const hasValidPin = pinValidator.isActivePin(p.pin, p.pinExpiresAt)
+  // TODO: use pinEnv to differentiate between live and familiarisation checks
+  return pinEnv === 'live'
+    ? !hasValidPin && !hasAttendance && !canRestart
+    : !hasValidPin
 }
 
 /**
- * Generate pupils pins
+ * Generate pupils pins for a specific pin env (live/fam)
  * @param pupilsList
  * @param dfeNumber
  * @param maxAttempts
  * @param attemptsRemaining
+ * @param schoolId
+ * @param pinEnv
+ * @throws
  */
-pinGenerationService.updatePupilPins = async (pupilsList, dfeNumber, maxAttempts, attemptsRemaining) => {
+pinGenerationService.updatePupilPins = async (pupilsList, dfeNumber, maxAttempts, attemptsRemaining, schoolId, pinEnv) => {
   if (!Array.isArray(pupilsList)) {
     throw new Error('Received list of pupils is not an array')
   }
+  if (!schoolId) {
+    throw new Error('Parameter `schoolId` not provided', schoolId)
+  }
+
   let ids = Object.values(pupilsList || null)
   ids = ids.map(i => parseInt(i))
-  const pupils = await pupilDataService.sqlFindByIds(ids)
+  const pupils = await pupilDataService.sqlFindByIds(ids, schoolId)
   pupils.forEach(pupil => {
     if (!pinValidator.isActivePin(pupil.pin, pupil.pinExpiresAt)) {
       pupil.pin = pinGenerationService.generatePupilPin()
@@ -104,7 +114,7 @@ pinGenerationService.updatePupilPins = async (pupilsList, dfeNumber, maxAttempts
   })
   const data = pupils.map(p => ({ id: p.id, pin: p.pin, pinExpiresAt: p.pinExpiresAt }))
   try {
-    await pupilDataService.sqlUpdatePinsBatch(data)
+    await pupilDataService.sqlUpdatePinsBatch(data, pinEnv)
   } catch (error) {
     if (attemptsRemaining === 0) {
       throw new Error(`${maxAttempts} allowed attempts 
@@ -116,7 +126,7 @@ pinGenerationService.updatePupilPins = async (pupilsList, dfeNumber, maxAttempts
       const pupilsWithActivePins = await pupilDataService.sqlFindPupilsWithActivePins(dfeNumber)
       const pupilIdsWithActivePins = pupilsWithActivePins.map(p => p.id)
       const pendingPupilIds = R.difference(ids, pupilIdsWithActivePins)
-      await pinGenerationService.updatePupilPins(pendingPupilIds, dfeNumber, maxAttempts, attemptsRemaining)
+      await pinGenerationService.updatePupilPins(pendingPupilIds, dfeNumber, maxAttempts, attemptsRemaining, schoolId, pinEnv)
     } else {
       throw new Error(error)
     }
@@ -167,4 +177,4 @@ pinGenerationService.generatePupilPin = () => {
   return randomGenerator.getRandom(pupilPinLength, chars)
 }
 
-module.exports = pinGenerationService
+module.exports = monitor('pin-generation.service', pinGenerationService)

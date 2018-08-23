@@ -7,17 +7,13 @@ Feature:
   Background:
     Given I am logged in with a test developer
 
-  Scenario: Assign check window page has a heading
-    Given I am on the assign check window page
-    Then I should see a heading for the page
+  Scenario: Assign check window landing page displays information
+    And I am on the assign check window page
+    Then I should see assign check window page as per design
 
-  Scenario: Assign check window page has information about the check form
+  Scenario: Assign check window page doesn't show check window whose check started date is in past
     Given I am on the assign check window page
-    Then I should see some information about the check form
-
-  Scenario: Assign check window page has check windows
-    Given I am on the assign check window page
-    Then I should see check windows
+    Then I should not see 'Development Phase' check windows
 
   @create_new_window
   Scenario: Users can assign a check form to a check window

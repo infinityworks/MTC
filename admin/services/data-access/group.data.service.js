@@ -4,6 +4,7 @@ const groupDataService = {}
 const sqlService = require('./sql.service')
 const TYPES = require('tedious').TYPES
 const R = require('ramda')
+const monitor = require('../../helpers/monitor')
 
 /**
  * Get active groups (non-soft-deleted).
@@ -185,7 +186,7 @@ groupDataService.sqlFindPupils = async (schoolId, groupId) => {
     }
   ]
 
-  let sql = `SELECT p.[id], p.[foreName], p.[middleNames], p.[lastName], g.[group_id]
+  let sql = `SELECT p.*, g.[group_id]
     FROM ${sqlService.adminSchema}.[pupil] p 
     LEFT JOIN ${sqlService.adminSchema}.[pupilGroup] g 
       ON p.id = g.pupil_id 
@@ -277,4 +278,4 @@ groupDataService.sqlFindOneGroupByPupilId = async (pupilId) => {
   return R.head(result)
 }
 
-module.exports = groupDataService
+module.exports = monitor('group.data-service', groupDataService)

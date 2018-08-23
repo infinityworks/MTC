@@ -3,8 +3,8 @@
 const pupilsNotTakingCheckService = require('../services/pupils-not-taking-check.service')
 const attendanceCodeService = require('../services/attendance.service')
 const pupilDataService = require('../services/data-access/pupil.data.service')
-const sortingAttributesService = require('../services/sorting-attributes.service')
 const groupService = require('../services/group.service')
+const monitor = require('../helpers/monitor')
 
 /**
  * Pupils not taking the check: initial page.
@@ -48,18 +48,9 @@ const getSelectPupilNotTakingCheck = async (req, res, next) => {
   let groups = []
   let groupIds = req.params.groupIds || ''
 
-  // Sorting
-  const sortingOptions = [
-    { 'key': 'name', 'value': 'asc' },
-    { 'key': 'reason', 'value': 'asc' }
-  ]
-  const sortField = req.params.sortField === undefined ? 'name' : req.params.sortField
-  const sortDirection = req.params.sortDirection === undefined ? 'asc' : req.params.sortDirection
-  const { htmlSortDirection, arrowSortDirection } = sortingAttributesService.getAttributes(sortingOptions, sortField, sortDirection)
-
   try {
     attendanceCodes = await attendanceCodeService.getAttendanceCodes()
-    pupilsList = await pupilsNotTakingCheckService.getPupilsWithReasonsForDfeNumber(req.user.School, sortField, sortDirection)
+    pupilsList = await pupilsNotTakingCheckService.getPupilsWithReasonsForDfeNumber(req.user.School)
   } catch (error) {
     return next(error)
   }
@@ -72,12 +63,8 @@ const getSelectPupilNotTakingCheck = async (req, res, next) => {
 
   return res.render('pupils-not-taking-the-check/pupils-list', {
     breadcrumbs: req.breadcrumbs(),
-    sortField,
-    sortDirection,
     attendanceCodes,
     pupilsList,
-    htmlSortDirection,
-    arrowSortDirection,
     highlight: [],
     groups,
     groupIds
@@ -105,7 +92,8 @@ const savePupilNotTakingCheck = async (req, res, next) => {
     await attendanceCodeService.updatePupilAttendanceBySlug(
       postedPupilSlugs,
       req.body.attendanceCode,
-      req.user.id)
+      req.user.id,
+      req.user.schoolId)
 
     const reasonText = postedPupilSlugs.length > 1 ? 'reasons' : 'reason'
     req.flash('info', `${postedPupilSlugs.length} ${reasonText} updated`)
@@ -165,10 +153,10 @@ const viewPupilsNotTakingTheCheck = async (req, res, next) => {
   }
 }
 
-module.exports = {
+module.exports = monitor('pupils-not-taking-the-check.controller', {
   getPupilNotTakingCheck,
   getSelectPupilNotTakingCheck,
   savePupilNotTakingCheck,
   removePupilNotTakingCheck,
   viewPupilsNotTakingTheCheck
-}
+})

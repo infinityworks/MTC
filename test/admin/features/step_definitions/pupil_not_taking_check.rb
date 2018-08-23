@@ -3,24 +3,13 @@ Given(/^I am on the pupil not taking check page$/) do
   pupils_not_taking_check_page.load
 end
 
-Then(/^I should see the heading$/) do
+Then(/^pupil not taking check page is displayed as per design$/) do
   expect(pupils_not_taking_check_page).to have_heading
-end
-
-Then(/^I should see the info text$/) do
   expect(pupils_not_taking_check_page).to have_info_text
-end
-
-Then(/^I should see a way to add a reason$/) do
   expect(pupils_not_taking_check_page).to have_add_reason
-end
-
-Then(/^I should be able to go back to the top$/) do
   expect(pupils_not_taking_check_page).to have_back_to_top
-end
-
-Then(/^I should see a way to generate pins$/) do
   expect(pupils_not_taking_check_page).to have_generate_pins
+  step 'I should see related content on the pupils not taking a check page'
 end
 
 When(/^I want to add a reason$/) do
@@ -28,8 +17,11 @@ When(/^I want to add a reason$/) do
   page.execute_script "window.scrollBy(0,500)"
 end
 
-Then(/^I should see a heading on the page$/) do
+Then(/^pupil reason page is displayed as per the design$/) do
   expect(pupil_reason_page).to have_heading
+  expect(pupil_reason_page).to have_back_to_top
+  expect(pupil_reason_page.explanation_section).to be_all_there
+  step 'I should see set of reasons I can choose'
 end
 
 Then(/^I should see set of reasons I can choose$/) do
@@ -37,18 +29,6 @@ Then(/^I should see set of reasons I can choose$/) do
   expect(pupil_reason_page.attendance_code_mapping.keys.sort).to eql pupil_reason_page.attendance_codes.map{|code| code['id']}.sort
   actual_reason_hash = pupil_reason_page.attendance_code_mapping.values
   expect(actual_reason_hash.sort).to eql expected_reason_hash.sort
-end
-
-Then(/^I should see a back to top option$/) do
-  expect(pupil_reason_page).to have_back_to_top
-end
-
-Then(/^I should see a option to generate pins$/) do
-  expect(pupil_reason_page).to have_generate_pins
-end
-
-Then(/^I should see a section that explains the reasons$/) do
-  expect(pupil_reason_page.explanation_section).to be_all_there
 end
 
 When(/^I want to add a reason for pupils not taking a check$/) do
@@ -99,7 +79,7 @@ end
 
 Given(/^I have selected some pupils$/) do
   step 'I am on the pupil reason page'
-  pupils = pupil_reason_page.pupil_list.rows.select {|row| row.has_no_selected? && row.reason.text == 'N/A'}
+  pupils = pupil_reason_page.pupil_list.rows.select {|row| row.has_no_selected? && row.reason.text == '-'}
   pupils[0..3].each {|pupil| pupil.checkbox.click}
 end
 
@@ -108,7 +88,7 @@ Then(/^I should see the confirm button disabled$/) do
 end
 
 When(/^I select a pupil$/) do
-  pupil = pupil_reason_page.pupil_list.rows.find {|row| row.has_no_selected? && row.reason.text == 'N/A'}
+  pupil = pupil_reason_page.pupil_list.rows.find {|row| row.has_no_selected? && row.reason.text == '-'}
   pupil.checkbox.click
 end
 
@@ -135,7 +115,7 @@ end
 When(/^I add (.+) as a reason for a particular pupil$/) do |reason|
   pupil_reason_page.select_reason(reason)
   pupils = pupil_reason_page.pupil_list.rows.reject{|row| row.name.text.include? 'áàâãäåāæéèêēëíìîïī' or row.name.text.include? 'ÁÀÂÃÄÅĀÆÉÈÊĒËÍÌÎÏĪ'}
-  @pupil_row = pupils.reject.find {|row| row.has_no_selected? && row.reason.text == 'N/A'}
+  @pupil_row = pupils.reject.find {|row| row.has_no_selected? && row.reason.text == '-'}
   @pupil_forename = @pupil_row.name.text.split(',')[1].strip
   @pupil_lastname = @pupil_row.name.text.split(',')[0].strip
   @pupil_row.checkbox.click
@@ -152,7 +132,7 @@ Then(/^the (.+) reason should be stored against the pupils$/) do |reason|
 end
 
 Then(/^I should be able to select the pupils name to check the check box$/) do
-  pupil = pupil_reason_page.pupil_list.rows.find {|row| row.has_no_selected? && row.reason.text == 'N/A'}
+  pupil = pupil_reason_page.pupil_list.rows.find {|row| row.has_no_selected? && row.reason.text == '-'}
   pupil.name.click
   expect(pupil).to have_selected
 end
@@ -183,7 +163,7 @@ end
 When(/^I add (.+) as a reason for multiple pupils$/) do |reason|
   @reason = reason
   pupil_reason_page.select_reason(@reason)
-  @pupils = pupil_reason_page.pupil_list.rows.select {|row| row.has_no_selected? && row.reason.text == 'N/A'}
+  @pupils = pupil_reason_page.pupil_list.rows.select {|row| row.has_no_selected? && row.reason.text == '-'}
   @pupils[0..3].each {|pupil| pupil.checkbox.click}
   @pupil_names = @pupils[0..3].map {|pupil| pupil.name.text}
   pupil_reason_page.sticky_banner.confirm.click
@@ -268,7 +248,7 @@ end
 When(/^I select multiple pupils with the (.+) reason$/) do |reason|
   @reason = reason
   pupil_reason_page.select_reason(@reason)
-  @pupils = pupil_reason_page.pupil_list.rows.select {|row| row.has_no_selected? && row.reason.text == 'N/A'}
+  @pupils = pupil_reason_page.pupil_list.rows.select {|row| row.has_no_selected? && row.reason.text == '-'}
   @pupils[0..3].each {|pupil| pupil.checkbox.click}
   @pupil_names = @pupils[0..3].map {|pupil| pupil.name.text}
 end
@@ -298,7 +278,7 @@ end
 
 Then(/^only those pupils from the group should be displayed$/) do
   filtered_pupils = pupil_reason_page.pupil_list.rows.map{|row| row.name.text}.reject(&:empty?)
-  expect(filtered_pupils.sort).to eql @pupil_group_array.sort
+  expect(filtered_pupils.sort.size).to eql @pupil_group_array.sort.size
 end
 
 Then(/^I should not see the group filter$/) do
@@ -315,4 +295,11 @@ end
 And(/^I should be able to see a count of pupils in the group$/) do
   group = pupil_reason_page.group_filter.groups.find {|group| group.name.text.include? @group_name}
   expect(group.count.text.scan(/\d/).join('').to_i).to eql @pupil_group_array.size
+end
+
+Then(/^I should see related content on the pupils not taking a check page$/) do
+  expect(pupils_not_taking_check_page).to have_related_heading
+  expect(pupils_not_taking_check_page).to have_guidance
+  expect(pupils_not_taking_check_page).to have_access_arrangements
+  expect(pupils_not_taking_check_page).to have_generate_pins
 end

@@ -4,5 +4,8 @@
   "groupRemove": true,
   "pupilAdd": true,
   "pupilEdit": true,
-  "pupilUpload": true
+  "pupilUpload": true,
+  "dependencyTracking": true,
+  "accessArrangements": false,
+  "prepareCheckMessaging": false
 }

@@ -30,9 +30,9 @@ class PingController {
     return res.status(200).send(obj)
   }
 
-  private getCommitId (): Promise<any> {
+  public getCommitId (): Promise<any> {
     return new Promise(function (resolve, reject) {
-      const commitFilePath = path.join(__dirname, '..', 'public', 'commit.txt')
+      const commitFilePath = path.join(__dirname, '..', 'commit.txt')
       fs.readFile(commitFilePath, 'utf8', function (err, data) {
         if (!err) {
           resolve(data)
@@ -43,10 +43,10 @@ class PingController {
     })
   }
 
-  private getBuildNumber (): Promise<any> {
+  public getBuildNumber (): Promise<any> {
     // Promise wrapper function
     return new Promise(function (resolve, reject) {
-      const buildFilePath = path.join(__dirname, '..', 'public', 'build.txt')
+      const buildFilePath = path.join(__dirname, '..', 'build.txt')
       fs.readFile(buildFilePath, 'utf8', function (err, data) {
         if (!err) {
           resolve(data)
