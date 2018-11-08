@@ -52,6 +52,19 @@ module.exports = async function (context, checkStartMessage) {
     throw error
   }
 
+  // Close down any familiarisation checks in the preparedCheck table
+  const familiarisationChecks = await sqlUtil.sqlFindFamiliarisationChecksForPupil(checkData.pupil_id)
+  familiarisationChecks.forEach(async check => {
+    try {
+      await azureStorageHelper.deleteFromPreparedCheckTableStorage(azureTableService, check.checkCode, context.log)
+      // Set the status of any familiarisation checks to COMPLETE in the SQL DB
+      await sqlUtil.sqlSetCheckStatusToComplete(check.id)
+    } catch (error) {
+      // ignore any errors and carry on
+      context.log.error(`check-started: ERROR: failed to close off existing familiarisation check because live check started ${check.checkCode}`)
+    }
+  })
+
   // Request a pupil status change
   try {
     if (checkData.isLiveCheck) {
