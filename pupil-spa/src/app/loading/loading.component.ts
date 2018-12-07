@@ -66,7 +66,9 @@ export class LoadingComponent implements AfterViewInit, OnDestroy, AfterViewChec
 
     switch (key) {
       case 'Enter':
-        this.sendTimeoutEvent();
+        if (this.nextButtonDelayFinished) {
+          this.sendTimeoutEvent();
+        }
         break;
     }
 
