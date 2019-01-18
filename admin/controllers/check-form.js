@@ -316,7 +316,7 @@ const assignCheckFormToWindowPage = async (req, res, next) => {
     return next(error)
   }
 
-  if (moment().isBefore(checkWindow.checkStartDate)) {
+  if (moment().isBefore(checkWindow.checkEndDate)) {
     try {
       checkFormsList = await checkFormService.getUnassignedFormsForCheckWindow(checkWindow.id)
     } catch (error) {
