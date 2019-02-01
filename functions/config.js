@@ -23,7 +23,7 @@ module.exports = {
     },
     Pooling: {
       MinCount: process.env.SQL_POOL_MIN_COUNT || 5,
-      MaxCount: process.env.SQL_POOL_MAX_COUNT || 10,
+      MaxCount: process.env.SQL_POOL_MAX_COUNT || 30,
       LoggingEnabled: process.env.hasOwnProperty('SQL_POOL_LOG_ENABLED') ? toBool(process.env.SQL_POOL_LOG_ENABLED) : true
     },
     Azure: {
