@@ -1,0 +1,13 @@
+{
+  "name": "database-migrator",
+  "version": "1.0.0",
+  "description": "migration runner for database",
+  "main": "index.js",
+  "repository": "git@github.com:DFEAGILEDEVOPS/MTC.git",
+  "author": "Guy Harwood",
+  "license": "GPL-3.0",
+  "dependencies": {
+    "postgrator": "^3.8.0",
+    "to-bool": "^0.0.1"
+  }
+}
