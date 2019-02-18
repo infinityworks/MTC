@@ -46,13 +46,13 @@ class Migrator extends Postgrator {
 const migratorConfig = {
   migrationDirectory: path.join(__dirname, '/migrations'),
   driver: 'mssql',
-  host: config.Sql.Server,
-  port: config.Sql.Port,
-  database: config.Sql.Database,
-  username: config.Sql.Migrator.Username,
-  password: config.Sql.Migrator.Password,
-  requestTimeout: config.Sql.Migrator.Timeout,
-  connectionTimeout: config.Sql.Migrator.Timeout,
+  host: config.Server,
+  port: config.Port,
+  database: config.Database,
+  username: config.Migrator.Username,
+  password: config.Migrator.Password,
+  requestTimeout: config.Migrator.Timeout,
+  connectionTimeout: config.Migrator.Timeout,
   // Schema table name. Optional. Default is schemaversion
   schemaTable: 'migrationLog',
   options: {
@@ -89,7 +89,7 @@ const runMigrations = async (version) => {
 
 runMigrations(process.argv[2] || 'max')
   .then(() => {
-    logger.info('Done')
+    console.log('Done')
     process.exit(0)
   })
   .catch(() => {

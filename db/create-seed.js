@@ -5,7 +5,6 @@ const moment = require('moment')
 const fs = require('fs')
 const path = require('path')
 const commandLineArgs = require('command-line-args')
-const logger = require('../../services/log.service').getLogger()
 
 const seedsDir = path.join(__dirname, 'seeds')
 
@@ -33,13 +32,13 @@ const createSeeder = options => {
     seedFileName = `${seedFile}.${options.format.toLowerCase()}`
     fs.writeFileSync(seedFileName, '')
   }
-  logger.info(`Created ${seedFileName}`)
+  console.log(`Created ${seedFileName}`)
 }
 
 try {
   const options = commandLineArgs(optionDefinitions)
   if (options.help || !options.name || (options.format === 'tsv' && options.table === 'custom')) {
-    logger.info(`
+    console.log(`
     Usage: create-seed.js <name> [--table <model|custom>] [--format <tsv|sql|js>] [--help]
     `)
     process.exit(0)
@@ -47,6 +46,6 @@ try {
   createSeeder(options)
   process.exit(0)
 } catch (error) {
-  logger.error(`Error: ${error.message}`)
+  console.error(`Error: ${error.message}`)
   process.exit(1)
 }

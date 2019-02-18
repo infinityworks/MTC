@@ -45,7 +45,7 @@ const processSeed = async (seed) => {
         .on('end', resolve)
     })
     if (content.length === 0) {
-      logger.info(`Empty seed: ${filename}`)
+      console.log(`Empty seed: ${filename}`)
       return
     }
     const { table } = seed
@@ -62,7 +62,7 @@ const processSeed = async (seed) => {
     sql = await content.generateSql()
   }
 
-  logger.info(filename)
+  console.log(filename)
   try {
     await sqlService.modify(sql, params)
   } catch (error) {
@@ -85,7 +85,7 @@ const processSeed = async (seed) => {
 }
 
 const runSeeds = async (version) => {
-  logger.info(chalk.green('Migrating seeds: '), chalk.green.bold(version))
+  console.log(chalk.green('Migrating seeds: '), chalk.green.bold(version))
 
   try {
     const seedList = await loadSeeds()
@@ -117,10 +117,10 @@ const runSeeds = async (version) => {
       await processSeed(foundSeed)
     }
 
-    logger.info(chalk.green('SQL Seeds complete'))
+    console.log(chalk.green('SQL Seeds complete'))
   } catch (error) {
-    logger.error(chalk.red('ERROR: ', error.message))
-    logger.error(chalk.red('ERROR: ', error.stack))
+    console.error(chalk.red('ERROR: ', error.message))
+    console.error(chalk.red('ERROR: ', error.stack))
   }
 }
 
@@ -128,15 +128,15 @@ const main = async () => {
   try {
     runSeeds(process.argv[2] || 'all')
       .then(() => {
-        logger.info(chalk.green('Done'))
+        console.log(chalk.green('Done'))
         process.exit(0)
       },
       (error) => {
-        logger.info(chalk.red(error.message))
+        console.log(chalk.red(error.message))
         process.exit(1)
       })
   } catch (error) {
-    logger.error(`Error caught: ${error.message}`)
+    console.error(`Error caught: ${error.message}`)
     process.exit(1)
   }
 }
