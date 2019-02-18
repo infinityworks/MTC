@@ -7,9 +7,7 @@ const csv = require('fast-csv')
 const fs = require('fs')
 const path = require('path')
 const logger = require('../../services/log.service').getLogger()
-
-const poolService = require('../../services/data-access/sql.pool.service')
-const sqlService = require('../../services/data-access/sql.service')
+const sql = require('./tedious-helper')
 
 const seedsDirectory = path.join(__dirname, '/seeds')
 const seedFilenameFormat = ['version', 'table', 'name', 'format']
@@ -64,6 +62,7 @@ const processSeed = async (seed) => {
 
   console.log(filename)
   try {
+    await sql.execute(sql)
     await sqlService.modify(sql, params)
   } catch (error) {
     /*
@@ -142,10 +141,8 @@ const main = async () => {
 }
 
 main()
-  .then(() => {
-    poolService.drain()
-  })
+/*   .then(() => {
+  }) */
   .catch(e => {
     console.warn(e)
-    poolService.drain()
   })
